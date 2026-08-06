@@ -99,6 +99,20 @@ def mean_value(vals):
     return mv
 
 
+def mean_abs_value(vals):
+    """
+        Находит среднее по модулю значение серии. Результат округляется до 4-х знаков после запятой.
+
+        :param vals: Массив с данными формата float.
+        :type vals: list[float]
+        :rtype: float
+        """
+
+    vals = list(map(lambda x: abs(x), vals))
+    mav = round(sum(vals) / len(vals), 4)
+    return mav
+
+
 def error_finder(vals_1, vals_2):
     """
     Определяет константу сдвига значений. Результат округляется до 2-х знаков после запятой.\n
@@ -118,9 +132,11 @@ def error_finder(vals_1, vals_2):
     """
 
     errindexs = []
+    dvs = []
 
     for l in range(len(vals_1)):
         dv = vals_1[l] - vals_2[l] * 2
+        dvs.append(dv)
 
         if abs(dv) > 0.1:
             errindexs.append(l)
@@ -128,29 +144,27 @@ def error_finder(vals_1, vals_2):
     if not errindexs:
         return 0.0
     else:
-        vls_1 = []
-        vls_2 = []
+        dvs = []
 
         for l in range(len(vals_1)):
             if l not in errindexs:
-                vls_1.append(vals_1[l])
-                vls_2.append(vals_2[l])
+                dv = vals_1[l] - vals_2[l] * 2
+                dvs.append(dv)
 
-        mean_1 = mean_value(vls_1)
-        mean_2 = mean_value(vls_2)
+        mdv = mean_abs_value(dvs)
         errs = []
 
         for v in errindexs:
-            err_1 = round(vals_1[v] - mean_1, 2)
-            err_2 = round(vals_2[v] - mean_2, 2)
+            nval_1, nval_2 = error_correction(vals_1[v], vals_2[v], mdv)
+            dnv = nval_1 - nval_2 * 2
 
-            if err_1 <= 0.35:
-                errs.append(abs(err_1))
+            if 0.1 <= abs(dnv) <= 0.3:
+                errs.append(dnv)
 
-            if err_2 <= 0.35:
-                errs.append(abs(err_2))
-
-        err = round(mean_value(errs), 2)
+        if not errs:
+            return 10.0
+        else:
+            err = round(mean_abs_value(errs), 3)
 
         return err
 
@@ -203,10 +217,11 @@ wb = Workbook()
 
 for i in range(3):
     n = 0
-    wb['Sheet'].cell(row=((i * 3) + 2), column=1, value=f'T{(i + 1)}')
-    wb['Sheet'].cell(row=((i * 3) + 2), column=2, value='dt')
-    wb['Sheet'].cell(row=((i * 3) + 3), column=2, value='mt')
-    wb['Sheet'].cell(row=((i * 3) + 4), column=2, value='UV|TV')
+    wb['Sheet'].cell(row=((i * 4) + 2), column=1, value=f'T{(i + 1)}')
+    wb['Sheet'].cell(row=((i * 4) + 2), column=2, value='dt')
+    wb['Sheet'].cell(row=((i * 4) + 3), column=2, value='mt')
+    wb['Sheet'].cell(row=((i * 4) + 4), column=2, value='err')
+    wb['Sheet'].cell(row=((i * 4) + 5), column=2, value='UV|TV')
 
     shs = db[i].sheetnames
 
@@ -238,13 +253,14 @@ for i in range(3):
 
         ut = len(ntn)
         mt = list(map(lambda x: round(x / 2, 4), ntn))
-        mdt = mean_value(dt)
+        mdt = mean_abs_value(dt)
         mmt = mean_value(mt)
 
         n += 1
         wb['Sheet'].cell(row=1, column=(n + 2), value=sh)
-        wb['Sheet'].cell(row=((i * 3) + 2), column=(n + 2), value=mdt)
-        wb['Sheet'].cell(row=((i * 3) + 3), column=(n + 2), value=mmt)
-        wb['Sheet'].cell(row=((i * 3) + 4), column=(n + 2), value=f'{ut}|{tv}')
+        wb['Sheet'].cell(row=((i * 4) + 2), column=(n + 2), value=mdt)
+        wb['Sheet'].cell(row=((i * 4) + 3), column=(n + 2), value=mmt)
+        wb['Sheet'].cell(row=((i * 4) + 4), column=(n + 2), value=xc)
+        wb['Sheet'].cell(row=((i * 4) + 5), column=(n + 2), value=f'{ut}|{tv}')
 
 wb.save(f'./results/{file}/{file}.xlsx')
