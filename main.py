@@ -101,7 +101,7 @@ def mean_value(vals):
 
 def error_finder(vals_1, vals_2):
     """
-    Определяет константу сдвига значений.\n
+    Определяет константу сдвига значений. Результат округляется до 2-х знаков после запятой.\n
     Выделяет пары с большой ошибкой, для оставшихся значений находит среднее - база, от которой находится сдвиг, находит средний сдвиг выделенных измерений.
 
     :param vals_1: Массив значений 1
@@ -141,16 +141,16 @@ def error_finder(vals_1, vals_2):
         errs = []
 
         for v in errindexs:
-            err_1 = vals_1[v] - mean_1
-            err_2 = vals_2[v] - mean_2
+            err_1 = round(vals_1[v] - mean_1, 2)
+            err_2 = round(vals_2[v] - mean_2, 2)
 
-            if err_1 < 0.35:
+            if err_1 <= 0.35:
                 errs.append(abs(err_1))
 
-            if err_2 < 0.35:
+            if err_2 <= 0.35:
                 errs.append(abs(err_2))
 
-        err = round(mean_value(errs), 3)
+        err = round(mean_value(errs), 2)
 
         return err
 
