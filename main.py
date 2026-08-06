@@ -198,7 +198,6 @@ def error_correction(val_1, val_2, err):
 
 file = input('Enter measurement name: ')
 db = load_data(file)
-shs = db[0].sheetnames
 
 wb = Workbook()
 
@@ -208,6 +207,8 @@ for i in range(3):
     wb['Sheet'].cell(row=((i * 3) + 2), column=2, value='dt')
     wb['Sheet'].cell(row=((i * 3) + 3), column=2, value='mt')
     wb['Sheet'].cell(row=((i * 3) + 4), column=2, value='UV|TV')
+
+    shs = db[i].sheetnames
 
     for sh in shs:
         tn, t2 = get_values(db[i], sh)
