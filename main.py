@@ -70,7 +70,7 @@ def get_values(book, sheet_name):
     :param sheet_name: Название листа, с которого считываются данные.
     :type sheet_name: str
 
-    :rtype: tuple[list, list]
+    :rtype: tuple[list[float | str], list[float]]
     """
 
     rc = get_rows_count(book, sheet_name)
@@ -79,7 +79,7 @@ def get_values(book, sheet_name):
     val_2 = []
 
     for r in range(2, rc+1):
-        if sheet.cell(row=r, column=2).value != 'ERROR!':
+        if sheet.cell(row=r, column=2).value not in ['ERROR!', 'ERROR! ']:
             val_1.append(str_to_float_if_needed(sheet.cell(row=r, column=2).value))
             val_2.append(round(sheet.cell(row=r, column=3).value, 4))
 
@@ -227,34 +227,41 @@ for i in range(3):
 
     for sh in shs:
         tn, t2 = get_values(db[i], sh)
-        ta = list(map(lambda x: x * 2, t2))
-        xc = error_finder(tn, t2)
-        dt = []
         tv = len(tn)
 
-        ntn = [0.0] * tv
-        nt2 = [0.0] * tv
-        nta = [0.0] * tv
+        if tv >= 3:
+            ta = list(map(lambda x: x * 2, t2))
+            xc = error_finder(tn, t2)
+            dt = []
 
-        for j in range(tv):
-            ntn[j], nt2[j] = error_correction(tn[j], t2[j], xc)
-            nta[j] = nt2[j] * 2
-            dtj = round(ntn[j] - nta[j], 4)
-            dt.append(ntn[j] - nta[j])
+            ntn = [0.0] * tv
+            nt2 = [0.0] * tv
+            nta = [0.0] * tv
 
-        while max(list(map(lambda x: abs(x), dt))) > 0.1:
-            for j in range(len(dt)):
-                if abs(dt[j]) > 0.1:
-                    ntn.pop(j)
-                    nt2.pop(j)
-                    nta.pop(j)
-                    dt.pop(j)
-                    break
+            for j in range(tv):
+                ntn[j], nt2[j] = error_correction(tn[j], t2[j], xc)
+                nta[j] = nt2[j] * 2
+                dtj = round(ntn[j] - nta[j], 4)
+                dt.append(ntn[j] - nta[j])
 
-        ut = len(ntn)
-        mt = list(map(lambda x: round(x / 2, 4), ntn))
-        mdt = mean_abs_value(dt)
-        mmt = mean_value(mt)
+            while max(list(map(lambda x: abs(x), dt))) > 0.1:
+                for j in range(len(dt)):
+                    if abs(dt[j]) > 0.1:
+                        ntn.pop(j)
+                        nt2.pop(j)
+                        nta.pop(j)
+                        dt.pop(j)
+                        break
+
+            ut = len(ntn)
+            mt = list(map(lambda x: round(x / 2, 4), ntn))
+            mdt = mean_abs_value(dt)
+            mmt = mean_value(mt)
+        else:
+            mdt = 0.0
+            mmt = 0.0
+            xc = 0.0
+            ut = 0
 
         n += 1
         wb['Sheet'].cell(row=1, column=(n + 2), value=sh)
