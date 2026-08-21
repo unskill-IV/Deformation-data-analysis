@@ -1,4 +1,4 @@
-# from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 from openpyxl import load_workbook, Workbook
 
 
@@ -73,12 +73,12 @@ def get_values(book, sheet_name):
     :rtype: tuple[list[float | str], list[float]]
     """
 
-    rc = get_rows_count(book, sheet_name)
+    rows_amount = get_rows_count(book, sheet_name)
     sheet = book[sheet_name]
     val_1 = []
     val_2 = []
 
-    for r in range(2, rc+1):
+    for r in range(2, rows_amount+1):
         if sheet.cell(row=r, column=2).value not in ['ERROR!', 'ERROR! ']:
             val_1.append(str_to_float_if_needed(sheet.cell(row=r, column=2).value))
             val_2.append(round(sheet.cell(row=r, column=3).value, 4))
@@ -95,8 +95,8 @@ def mean_value(vals):
     :rtype: float
     """
 
-    mv = round(sum(vals) / len(vals), 4)
-    return mv
+    mean_val = round(sum(vals) / len(vals), 4)
+    return mean_val
 
 
 def mean_abs_value(vals):
@@ -109,8 +109,8 @@ def mean_abs_value(vals):
         """
 
     vals = list(map(lambda x: abs(x), vals))
-    mav = round(sum(vals) / len(vals), 4)
-    return mav
+    mean_abs_val = round(sum(vals) / len(vals), 4)
+    return mean_abs_val
 
 
 def error_finder(vals_1, vals_2):
@@ -131,42 +131,42 @@ def error_finder(vals_1, vals_2):
         Если абсолютный сдвиг значения оказывается больше 0.35, то это значение игнорируется.
     """
 
-    errindexs = []
-    dvs = []
+    error_indexs = []
+    delta_vals = []
 
     for l in range(len(vals_1)):
-        dv = vals_1[l] - vals_2[l] * 2
-        dvs.append(dv)
+        delta_val = vals_1[l] - vals_2[l] * 2
+        delta_vals.append(delta_val)
 
-        if abs(dv) > 0.1:
-            errindexs.append(l)
+        if abs(delta_val) > 0.1:
+            error_indexs.append(l)
 
-    if not errindexs:
+    if not error_indexs:
         return 0.0
     else:
-        dvs = []
+        delta_vals = []
 
         for l in range(len(vals_1)):
-            if l not in errindexs:
-                dv = vals_1[l] - vals_2[l] * 2
-                dvs.append(dv)
+            if l not in error_indexs:
+                delta_val = vals_1[l] - vals_2[l] * 2
+                delta_vals.append(delta_val)
 
-        mdv = mean_abs_value(dvs)
-        errs = []
+        mean_abs_delta_val = mean_abs_value(delta_vals)
+        errors = []
 
-        for v in errindexs:
-            nval_1, nval_2 = error_correction(vals_1[v], vals_2[v], mdv)
-            dnv = nval_1 - nval_2 * 2
+        for v in error_indexs:
+            new_val_1, new_val_2 = error_correction(vals_1[v], vals_2[v], mean_abs_delta_val)
+            delta_new_val = new_val_1 - new_val_2 * 2
 
-            if 0.1 <= abs(dnv) <= 0.3:
-                errs.append(dnv)
+            if 0.1 <= abs(delta_new_val) <= 0.3:
+                errors.append(delta_new_val)
 
-        if not errs:
+        if not errors:
             return 10.0
         else:
-            err = round(mean_abs_value(errs), 3)
+            error = round(mean_abs_value(errors), 3)
 
-        return err
+        return error
 
 
 def error_correction(val_1, val_2, err):
@@ -194,17 +194,17 @@ def error_correction(val_1, val_2, err):
         Ошибка всё ещё может остаться большой, в таких случаях можно повторно использовать корректировку или игнорировать такие значения.
     """
 
-    dval = round(val_1 - val_2 * 2, 4)
+    delta_val = round(val_1 - val_2 * 2, 4)
 
-    if abs(dval) >= 0.1:
-        if 0.1 <= dval <= 0.4:
+    if abs(delta_val) >= 0.1:
+        if 0.1 <= delta_val <= 0.4:
             val_1 -= err
-        elif -0.4 <= dval <= -0.1:
+        elif -0.4 <= delta_val <= -0.1:
             val_1 -= err
             val_2 -= err
-        elif dval > 0.4:
+        elif delta_val > 0.4:
             val_2 += err
-        elif dval < -0.4:
+        elif delta_val < -0.4:
             val_2 -= err
 
     return round(val_1, 4), round(val_2, 4)
@@ -223,51 +223,50 @@ for i in range(3):
     wb['Sheet'].cell(row=((i * 4) + 4), column=2, value='err')
     wb['Sheet'].cell(row=((i * 4) + 5), column=2, value='UV|TV')
 
-    shs = db[i].sheetnames
+    shts = db[i].sheetnames
 
-    for sh in shs:
-        tn, t2 = get_values(db[i], sh)
-        tv = len(tn)
+    for sht in shts:
+        tn, t2 = get_values(db[i], sht)
+        total_amount_of_values = len(tn)
 
-        if tv >= 3:
+        if total_amount_of_values >= 3:
             ta = list(map(lambda x: x * 2, t2))
-            xc = error_finder(tn, t2)
-            dt = []
+            shift_constant = error_finder(tn, t2)
+            delta_t = []
 
-            ntn = [0.0] * tv
-            nt2 = [0.0] * tv
-            nta = [0.0] * tv
+            new_tn = [0.0] * total_amount_of_values
+            new_t2 = [0.0] * total_amount_of_values
+            new_ta = [0.0] * total_amount_of_values
 
-            for j in range(tv):
-                ntn[j], nt2[j] = error_correction(tn[j], t2[j], xc)
-                nta[j] = nt2[j] * 2
-                dtj = round(ntn[j] - nta[j], 4)
-                dt.append(ntn[j] - nta[j])
+            for j in range(total_amount_of_values):
+                new_tn[j], new_t2[j] = error_correction(tn[j], t2[j], shift_constant)
+                new_ta[j] = new_t2[j] * 2
+                delta_t.append(round(new_tn[j] - new_ta[j], 4))
 
-            while max(list(map(lambda x: abs(x), dt))) > 0.1:
-                for j in range(len(dt)):
-                    if abs(dt[j]) > 0.1:
-                        ntn.pop(j)
-                        nt2.pop(j)
-                        nta.pop(j)
-                        dt.pop(j)
+            while max(list(map(lambda x: abs(x), delta_t))) > 0.1:
+                for j in range(len(delta_t)):
+                    if abs(delta_t[j]) > 0.1:
+                        new_tn.pop(j)
+                        new_t2.pop(j)
+                        new_ta.pop(j)
+                        delta_t.pop(j)
                         break
 
-            ut = len(ntn)
-            mt = list(map(lambda x: round(x / 2, 4), ntn))
-            mdt = mean_abs_value(dt)
-            mmt = mean_value(mt)
+            used_amount_of_values = len(new_tn)
+            mt = list(map(lambda x: round(x / 2, 4), new_tn))
+            mean_delta_t = mean_abs_value(delta_t)
+            mean_mt = mean_value(mt)
         else:
-            mdt = 0.0
-            mmt = 0.0
-            xc = 0.0
-            ut = 0
+            mean_delta_t = 0.0
+            mean_mt = 0.0
+            shift_constant = 0.0
+            used_amount_of_values = 0
 
         n += 1
-        wb['Sheet'].cell(row=1, column=(n + 2), value=sh)
-        wb['Sheet'].cell(row=((i * 4) + 2), column=(n + 2), value=mdt)
-        wb['Sheet'].cell(row=((i * 4) + 3), column=(n + 2), value=mmt)
-        wb['Sheet'].cell(row=((i * 4) + 4), column=(n + 2), value=xc)
-        wb['Sheet'].cell(row=((i * 4) + 5), column=(n + 2), value=f'{ut}|{tv}')
+        wb['Sheet'].cell(row=1, column=(n + 2), value=sht)
+        wb['Sheet'].cell(row=((i * 4) + 2), column=(n + 2), value=mean_delta_t)
+        wb['Sheet'].cell(row=((i * 4) + 3), column=(n + 2), value=mean_mt)
+        wb['Sheet'].cell(row=((i * 4) + 4), column=(n + 2), value=shift_constant)
+        wb['Sheet'].cell(row=((i * 4) + 5), column=(n + 2), value=f'{used_amount_of_values}|{total_amount_of_values}')
 
 wb.save(f'./results/{file}/{file}.xlsx')
