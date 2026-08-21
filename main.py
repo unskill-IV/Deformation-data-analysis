@@ -1,4 +1,4 @@
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 from openpyxl import load_workbook, Workbook
 
 
@@ -131,7 +131,7 @@ def error_finder(vals_1, vals_2):
         Если абсолютный сдвиг значения оказывается больше 0.35, то это значение игнорируется.
     """
 
-    error_indexs = []
+    error_indexes = []
     delta_vals = []
 
     for l in range(len(vals_1)):
@@ -139,22 +139,22 @@ def error_finder(vals_1, vals_2):
         delta_vals.append(delta_val)
 
         if abs(delta_val) > 0.1:
-            error_indexs.append(l)
+            error_indexes.append(l)
 
-    if not error_indexs:
+    if not error_indexes:
         return 0.0
     else:
         delta_vals = []
 
         for l in range(len(vals_1)):
-            if l not in error_indexs:
+            if l not in error_indexes:
                 delta_val = vals_1[l] - vals_2[l] * 2
                 delta_vals.append(delta_val)
 
         mean_abs_delta_val = mean_abs_value(delta_vals)
         errors = []
 
-        for v in error_indexs:
+        for v in error_indexes:
             new_val_1, new_val_2 = error_correction(vals_1[v], vals_2[v], mean_abs_delta_val)
             delta_new_val = new_val_1 - new_val_2 * 2
 
