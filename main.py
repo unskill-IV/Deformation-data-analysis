@@ -1,4 +1,4 @@
-# from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 from openpyxl import load_workbook, Workbook
 
 
