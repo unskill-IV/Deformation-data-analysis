@@ -96,6 +96,7 @@ def mean_value(vals):
     """
 
     mean_val = round(sum(vals) / len(vals), 4)
+
     return mean_val
 
 
@@ -110,6 +111,7 @@ def mean_abs_value(vals):
 
     vals = list(map(lambda x: abs(x), vals))
     mean_abs_val = round(sum(vals) / len(vals), 4)
+
     return mean_abs_val
 
 
@@ -210,20 +212,47 @@ def error_correction(val_1, val_2, err):
     return round(val_1, 4), round(val_2, 4)
 
 
+def create_print_skeleton(book, rows_names, column_names):
+    """
+    Создаёт скелет таблицы вывода результатов обработки. (использует лист Sheet)\n
+    Скелет строится с учётом трёх датчиков, поэт
+
+    :param book: рабочий Workbook
+    :type book: Workbook
+
+    :param rows_names: Список названий строк вывода. Скелет строится с учётом трёх датчиков, поэтому не нужно повторять названия 3 раза.
+    :type rows_names: list[str]
+
+    :param column_names: Список названий столбцов.
+    :type column_names: list[str]
+    """
+
+    rows_amount = len(rows_names)
+
+    for t in range(3):
+        book['Sheet'].cell(row=((t * rows_amount) + 2), column=1, value=f'T{(t + 1)}')
+
+        for r in range(rows_amount):
+            book['Sheet'].cell(row=((t * rows_amount) + 2 + r), column=2, value=rows_names[r])
+
+        for s in range(len(column_names)):
+            book['Sheet'].cell(row=1, column=(s + 3), value=column_names[s])
+
+    return 0
+
+
 file = input('Enter measurement name: ')
 db = load_data(file)
 
 wb = Workbook()
 
+print_names = ['delta', 'time', 'shift', 'UV|TV']
+
 for i in range(3):
     n = 0
-    wb['Sheet'].cell(row=((i * 4) + 2), column=1, value=f'T{(i + 1)}')
-    wb['Sheet'].cell(row=((i * 4) + 2), column=2, value='dt')
-    wb['Sheet'].cell(row=((i * 4) + 3), column=2, value='mt')
-    wb['Sheet'].cell(row=((i * 4) + 4), column=2, value='err')
-    wb['Sheet'].cell(row=((i * 4) + 5), column=2, value='UV|TV')
-
     shts = db[i].sheetnames
+
+    create_print_skeleton(wb, print_names, shts)
 
     for sht in shts:
         tn, t2 = get_values(db[i], sht)
@@ -263,7 +292,6 @@ for i in range(3):
             used_amount_of_values = 0
 
         n += 1
-        wb['Sheet'].cell(row=1, column=(n + 2), value=sht)
         wb['Sheet'].cell(row=((i * 4) + 2), column=(n + 2), value=mean_delta_t)
         wb['Sheet'].cell(row=((i * 4) + 3), column=(n + 2), value=mean_mt)
         wb['Sheet'].cell(row=((i * 4) + 4), column=(n + 2), value=shift_constant)
