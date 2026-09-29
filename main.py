@@ -247,10 +247,12 @@ db = load_data(file)
 wb = Workbook()
 
 print_names = ['delta', 'time', 'shift', 'UV|TV']
+print_values = []
 
 for i in range(3):
-    n = 0
+    # n = 0
     shts = db[i].sheetnames
+    ti_print_values = []
 
     create_print_skeleton(wb, print_names, shts)
 
@@ -291,10 +293,22 @@ for i in range(3):
             shift_constant = 0.0
             used_amount_of_values = 0
 
-        n += 1
-        wb['Sheet'].cell(row=((i * 4) + 2), column=(n + 2), value=mean_delta_t)
-        wb['Sheet'].cell(row=((i * 4) + 3), column=(n + 2), value=mean_mt)
-        wb['Sheet'].cell(row=((i * 4) + 4), column=(n + 2), value=shift_constant)
-        wb['Sheet'].cell(row=((i * 4) + 5), column=(n + 2), value=f'{used_amount_of_values}|{total_amount_of_values}')
+        # n += 1
+        sheet_print_values = []
+
+        sheet_print_values.append(mean_delta_t)
+        sheet_print_values.append(mean_mt)
+        sheet_print_values.append(shift_constant)
+        sheet_print_values.append(f'{used_amount_of_values}|{total_amount_of_values}')
+        # wb['Sheet'].cell(row=((i * 4) + 2), column=(n + 2), value=mean_delta_t)
+        # wb['Sheet'].cell(row=((i * 4) + 3), column=(n + 2), value=mean_mt)
+        # wb['Sheet'].cell(row=((i * 4) + 4), column=(n + 2), value=shift_constant)
+        # wb['Sheet'].cell(row=((i * 4) + 5), column=(n + 2), value=f'{used_amount_of_values}|{total_amount_of_values}')
+
+        ti_print_values.append(sheet_print_values)
+
+    print_values.append(ti_print_values)
+
+
 
 wb.save(f'./results/{file}/{file}.xlsx')
